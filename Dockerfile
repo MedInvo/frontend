@@ -1,4 +1,4 @@
-
+#Dockerfile for frontend application
 # Build stage
 FROM node:20-alpine AS build
 
