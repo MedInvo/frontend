@@ -4,7 +4,11 @@ name: CI/CD - MedInvo Frontend
 on:
   push:
     branches:
+      - main
       - develop
+      - "feature/**"
+      - "test/**"
+      - "bugfix/**"
       - "release/**"
 
   pull_request:
