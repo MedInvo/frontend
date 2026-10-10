@@ -1,4 +1,3 @@
-
 name: CI/CD - MedInvo Frontend
 
 on:
@@ -152,6 +151,8 @@ jobs:
   docker-build-scan-push:
     name: Docker Build, Trivy Scan and ECR Push
     runs-on: ubuntu-latest
+    environment: dev
+
     needs: build
 
     # Publish on main, develop and release branches.
