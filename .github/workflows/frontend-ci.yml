@@ -35,10 +35,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@FULL_SHA_CHECKOUT # Replace with verified 40-character SHA
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@FULL_SHA_SETUP_NODE # Replace with verified 40-character SHA
         with:
           node-version: "24"
           cache: npm
@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@FULL_SHA_UPLOAD_ARTIFACT # Replace with verified 40-character SHA
         with:
           name: frontend-coverage
           path: coverage/
@@ -66,18 +66,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@FULL_SHA_CHECKOUT # Replace with verified 40-character SHA
         with:
           fetch-depth: 0
 
       - name: Download coverage report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@FULL_SHA_DOWNLOAD_ARTIFACT # Replace with verified 40-character SHA
         with:
           name: frontend-coverage
           path: coverage/
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@FULL_SHA_SETUP_NODE # Replace with verified 40-character SHA
         with:
           node-version: "24"
           cache: npm
@@ -85,8 +85,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Java
+        uses: actions/setup-java@FULL_SHA_SETUP_JAVA # Replace with verified 40-character SHA
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: SonarCloud Scan and Quality Gate
-        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        uses: SonarSource/sonarqube-scan-action@FULL_SHA_SONAR_SCAN # Replace with verified 40-character SHA
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -112,10 +118,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@FULL_SHA_CHECKOUT # Replace with verified 40-character SHA
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@FULL_SHA_SETUP_NODE # Replace with verified 40-character SHA
         with:
           node-version: "24"
           cache: npm
@@ -127,7 +133,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@FULL_SHA_UPLOAD_ARTIFACT # Replace with verified 40-character SHA
         with:
           name: frontend-dist
           path: dist/
@@ -158,14 +164,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@FULL_SHA_CHECKOUT # Replace with verified 40-character SHA
 
       - name: Set image tag
         id: tag
         run: echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@FULL_SHA_AWS_CREDENTIALS # Replace with verified 40-character SHA
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -181,7 +187,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@FULL_SHA_ECR_LOGIN # Replace with verified 40-character SHA
 
       - name: Build Docker image
         env:
@@ -192,7 +198,7 @@ jobs:
             -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" .
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@FULL_SHA_TRIVY # Replace with verified 40-character SHA
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tag.outputs.image_tag }}
           format: table
