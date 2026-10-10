@@ -114,6 +114,8 @@ function App() {
       {error && <p role="alert">{error}</p>}
       {notice && <p className="notice">{notice}</p>}
 
+      #inventory-and-orders
+      
       <section className="forms" aria-label="Inventory and order forms">
         <form onSubmit={addProduct}>
           <h2>Add inventory</h2>
