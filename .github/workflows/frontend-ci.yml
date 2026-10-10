@@ -86,7 +86,7 @@ jobs:
         run: npm ci
 
       - name: SonarCloud Scan and Quality Gate
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -99,6 +99,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
+            -Dsonar.scanner.skipJreProvisioning=true
 
       - name: npm audit
         run: npm audit --audit-level=high
