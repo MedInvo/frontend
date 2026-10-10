@@ -1,19 +1,24 @@
+
+# Build stage
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY frontend/index.html ./index.html
-COPY frontend/vite.config.js ./vite.config.js
-COPY frontend/src ./src
+COPY index.html ./index.html
+COPY vite.config.js ./vite.config.js
+COPY src ./src
 
 RUN npm run build
 
+# Production stage
 FROM nginx:alpine
 
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
