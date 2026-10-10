@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Test coverage
+coverage/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.test
+!.env.test.example
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+
+# Temporary files
+*.local
+
+# Vite cache
+node_modules/.vite/
