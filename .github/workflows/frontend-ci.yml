@@ -154,13 +154,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    # Publish on main, develop and release branches.
+    # Do not publish images from pull requests.
     if: >-
       (github.event_name == 'push' &&
-       (github.ref == 'refs/heads/develop' ||
+       (github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/develop' ||
         startsWith(github.ref, 'refs/heads/release/'))) ||
       (github.event_name == 'workflow_dispatch' &&
        github.ref == format('refs/heads/{0}', inputs.ref) &&
-       (github.ref == 'refs/heads/develop' ||
+       (github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/develop' ||
         startsWith(github.ref, 'refs/heads/release/')))
 
     permissions:
