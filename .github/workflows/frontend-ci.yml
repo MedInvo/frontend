@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch to build and publish (must match selected branch)"
+        description: "Branch to build and publish"
         required: true
         default: develop
         type: string
@@ -28,7 +28,7 @@ env:
   ECR_REPOSITORY: pharma-medinvo-dev-frontend
 
 jobs:
-  # 1. Frontend unit tests and coverage
+  # 1. Run frontend tests and generate coverage
   test:
     name: Frontend Tests
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests with coverage
+      - name: Run tests with coverage
         run: npm test -- --coverage
 
       - name: Upload coverage report
@@ -58,34 +58,63 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  # 2. SonarCloud quality gate and dependency audit
-    # ── 4. Build React App ───────────────────────────────────────────────────
-  build:
-    name: Build
+  # 2. SonarCloud analysis and dependency audit
+  sonar:
+    name: SonarCloud Quality
     runs-on: ubuntu-latest
-    needs: [test, sonar]
+    needs: test
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v7
+        with:
+          name: frontend-coverage
+          path: coverage/
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "24"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production bundle
-        run: npm run build
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v6
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
         with:
-          name: build-artifact
-          path: build/
+          distribution: temurin
+          java-version: "21"
 
-  # 3. Production build
+      - name: Verify Java version
+        run: |
+          java -version
+          echo "JAVA_HOME=$JAVA_HOME"
+
+      - name: SonarCloud scan and quality gate
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=medinvo
+            -Dsonar.projectKey=MedInvo_frontend
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
+
+  # 3. Build the React/Vite application
   build:
     name: Build Frontend
     runs-on: ubuntu-latest
@@ -115,7 +144,7 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-  # 4. Build, scan and push Docker image
+  # 4. Build Docker image, scan it, and push to ECR
   docker-build-scan-push:
     name: Docker Build, Trivy Scan and ECR Push
     runs-on: ubuntu-latest
