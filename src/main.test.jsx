@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+
 import "@testing-library/jest-dom/vitest";
 import App from "./App.jsx";
 
@@ -23,15 +32,15 @@ describe("Pharma frontend", () => {
     render(<App />);
 
     expect(
-      screen.getByRole("heading", { name: "Inventory & orders" })
+      screen.getByRole("heading", { name: "Inventory & orders" }),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("heading", { name: "Add inventory" })
+      screen.getByRole("heading", { name: "Add inventory" }),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("heading", { name: "Create order" })
+      screen.getByRole("heading", { name: "Create order" }),
     ).toBeInTheDocument();
 
     await screen.findByText("No products yet. Add your first item above.");
@@ -58,6 +67,7 @@ describe("Pharma frontend", () => {
     render(<App />);
 
     expect(await screen.findByText("Paracetamol")).toBeInTheDocument();
+
     expect(screen.getByText("Medicine")).toBeInTheDocument();
     expect(screen.getByText("₹25.00")).toBeInTheDocument();
   });
@@ -68,7 +78,7 @@ describe("Pharma frontend", () => {
     render(<App />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "API unavailable"
+      "API unavailable",
     );
   });
 
@@ -93,23 +103,33 @@ describe("Pharma frontend", () => {
 
     await screen.findByText("No products yet. Add your first item above.");
 
-    fireEvent.change(screen.getByLabelText("Name"), {
+    // Select the Add inventory form only.
+    const inventoryForm = screen
+      .getByRole("heading", { name: "Add inventory" })
+      .closest("form");
+
+    expect(inventoryForm).not.toBeNull();
+
+    const inventory = within(inventoryForm);
+
+    fireEvent.change(inventory.getByLabelText("Name"), {
       target: { value: "Paracetamol" },
     });
 
-    fireEvent.change(screen.getByLabelText("Category"), {
+    fireEvent.change(inventory.getByLabelText("Category"), {
       target: { value: "Medicine" },
     });
 
-    fireEvent.change(screen.getByLabelText("Quantity"), {
+    // This no longer conflicts with Create order's Quantity field.
+    fireEvent.change(inventory.getByLabelText("Quantity"), {
       target: { value: "100" },
     });
 
-    fireEvent.change(screen.getByLabelText("Price (₹)"), {
+    fireEvent.change(inventory.getByLabelText("Price (₹)"), {
       target: { value: "25.50" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Add product" }));
+    fireEvent.click(inventory.getByRole("button", { name: "Add product" }));
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -123,12 +143,12 @@ describe("Pharma frontend", () => {
             quantity: 100,
             price: 25.5,
           }),
-        })
+        }),
       );
     });
 
     expect(
-      await screen.findByText("Product added to inventory.")
+      await screen.findByText("Product added to inventory."),
     ).toBeInTheDocument();
   });
 });
