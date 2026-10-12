@@ -1,4 +1,3 @@
-
 name: CI/CD - MedInvo Frontend
 
 on:
@@ -224,3 +223,65 @@ jobs:
           IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
         run: |
           docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+  # 5. Update GitOps repository — DEV deployment
+  deploy-dev:
+    name: Deploy — DEV through Argo CD
+    runs-on: ubuntu-latest
+    needs: docker-build-scan-push
+    environment: dev
+
+    # Deploy only after a successful image push from main.
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          ref: main
+          path: _gitops
+
+      - name: Install yq
+        run: |
+          VERSION=v4.47.1
+          wget -qO /usr/local/bin/yq \
+            "https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64"
+          chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Update frontend image tag in GitOps
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-scan-push.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          test -n "$IMAGE_TAG"
+
+          yq -i '.frontend.image.tag = strenv(IMAGE_TAG)' \
+            _gitops/environments/dev/values.yaml
+
+          echo "Updated frontend image tag to: $IMAGE_TAG"
+
+      - name: Commit and push GitOps change
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-scan-push.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          cd _gitops
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add environments/dev/values.yaml
+
+          if git diff --cached --quiet; then
+            echo "No GitOps changes to commit."
+            exit 0
+          fi
+
+          git commit -m "ci(dev): update frontend image to ${IMAGE_TAG}"
+          git push origin main
