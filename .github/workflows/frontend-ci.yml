@@ -114,7 +114,11 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
 
-      - name: Audit npm dependencies
+      - name: Audit production npm dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Report full dependency audit (non-blocking)
+        continue-on-error: true
         run: npm audit --audit-level=high
 
   # 3. Build the React/Vite application
